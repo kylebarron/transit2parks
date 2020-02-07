@@ -1,5 +1,6 @@
-from pathlib import Path
 from urllib.request import urlretrieve
+
+from util import find_root
 
 
 def main():
@@ -14,20 +15,6 @@ def download_pad():
     (root / 'data').mkdir(parents=True, exist_ok=True)
     urlretrieve(url, root / 'data' / 'pad.zip')
 
-
-def find_root():
-    cwd = Path('.').resolve()
-
-    i = -1
-    while True:
-        search_path = cwd if i < 0 else cwd.parents[i]
-
-        # Search for `.root`
-        rootfile = [x for x in search_path.iterdir() if x.name == '.root']
-        if rootfile:
-            return search_path
-
-        i += 1
 
 if __name__ == '__main__':
     main()
