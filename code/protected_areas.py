@@ -5,7 +5,8 @@ from util import find_root
 from zipfile import ZipFile
 from constants import DESIGNATION_TYPES
 
-PAD_PROJECTION = (f"""\
+PAD_PROJECTION = (
+    f"""\
 PROJCS["USA_Contiguous_Albers_Equal_Area_Conic_USGS_version",
     GEOGCS["NAD83",
         DATUM["North_American_Datum_1983",
@@ -32,6 +33,7 @@ PROJCS["USA_Contiguous_Albers_Equal_Area_Conic_USGS_version",
 
 from pyproj import CRS
 proj = CRS(PAD_PROJECTION)
+
 
 def main():
     root = find_root()
@@ -71,12 +73,12 @@ def get_public_areas_in_state():
     gdf = gdf[gdf['Access'].isin(allowed_access)]
 
 
-
 def find_gdb_in_zip(zip_path):
     with ZipFile(zip_path) as zf:
         names = zf.namelist()
         # Find gdb file(s) (it's actually a folder, hence /)
         return [x for x in names if x.endswith('.gdb/')]
+
 
 def find_combined_layer(path):
     """Find name of layer with combined categories
