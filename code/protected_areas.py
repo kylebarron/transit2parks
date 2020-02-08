@@ -1,11 +1,14 @@
-from keplergl_quickvis import Visualize as Vis
+from zipfile import ZipFile
+
 import fiona
 import geopandas as gpd
-from util import find_root
-from zipfile import ZipFile
-from constants import DESIGNATION_TYPES
+from keplergl_quickvis import Visualize as Vis
+from pyproj import CRS
 
-PAD_PROJECTION = (
+from constants import DESIGNATION_TYPES
+from util import find_root
+
+PAD_PROJECTION = CRS(
     f"""\
 PROJCS["USA_Contiguous_Albers_Equal_Area_Conic_USGS_version",
     GEOGCS["NAD83",
@@ -28,11 +31,6 @@ PROJCS["USA_Contiguous_Albers_Equal_Area_Conic_USGS_version",
     AXIS["Northing",NORTH],
     AUTHORITY["Esri","102039"]]
 """)
-# https://www.sciencebase.gov/catalog/file/get/5cc0e84be4b09b8c0b72927a?f=__disk__5a%2F81%2F75%2F5a8175a324b2e069554eaa00afa2d573c1eecb13
-# https://www.sciencebase.gov/catalog/file/get/5cc0e84be4b09b8c0b72927a?f=__disk__27%2F91%2Fe8%2F2791e8316bac5f72a31d1a6722f212f3b7239fc2
-
-from pyproj import CRS
-proj = CRS(PAD_PROJECTION)
 
 
 def main():
@@ -54,7 +52,7 @@ def get_public_areas_in_state():
 
     gdf = gpd.read_file(path, layer=combined_layer)
     # Add projection manually
-    gdf.crs = proj
+    gdf.crs = PAD_PROJECTION
     # Reproject to EPSG 4326
     gdf = gdf.to_crs(epsg=4326)
 
