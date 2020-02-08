@@ -1,3 +1,4 @@
+from urllib.request import urlretrieve
 from zipfile import ZipFile
 
 import fiona
@@ -34,21 +35,32 @@ PROJCS["USA_Contiguous_Albers_Equal_Area_Conic_USGS_version",
     AUTHORITY["Esri","102039"]]
 """)
 
+# TODO: use http://epsg.io/102003 for buffer
+
 
 def main():
     root = find_root()
-    data_dir = root / 'data'
+    download_dir = root / 'data' / 'raw_gdb'
+    download_dir.mkdir(exist_ok=True, parents=True)
+    state_download_urls = get_urls()
+
+    # state_name = 'district_of_columbia'
+    # download_url = state_download_urls[state_name]
+    for state_name, download_url in state_download_urls.items():
+        # Download GDB file
+        local_path = download_dir / (state_name + '.gdb.zip')
+        if not local_path.exists():
+            # TODO: update to use tqdm
+            urlretrieve(download_url, local_path)
 
 
-def get_public_areas_in_state():
-    root = find_root()
-    data_dir = root / 'data'
-    zip_path = data_dir / 'PADUS2_0CO_Arc10GDB.zip'
+# gdb_zip_path = data_dir / 'PADUS2_0CO_Arc10GDB.zip'
+def get_public_areas_in_state(gdb_zip_path):
 
-    gdb_files = find_gdb_in_zip(zip_path)
-    assert len(gdb_files) == 1, '>1 gdb file in zip'
+    gdb_files = find_gdb_in_zip(gdb_zip_path)
+    assert len(gdb_files) == 1, f'>1 gdb file in zip: {gdb_files}'
     gdb_file = gdb_files[0]
-    path = f'zip://{str(zip_path)}!{gdb_file}'
+    path = f'zip://{str(gdb_zip_path)}!{gdb_file}'
 
     combined_layer = find_combined_layer(path)
 
@@ -72,8 +84,18 @@ def get_public_areas_in_state():
     allowed_access = [OPEN_ACCESS, RESTRICTED_ACCESS]
     gdf = gdf[gdf['Access'].isin(allowed_access)]
 
+    return gdf
+
 
 def find_gdb_in_zip(zip_path):
+    """Find Geodatabase name(s) in Zip file
+
+    Args:
+        - zip_path: path to Zip file
+
+    Returns:
+        str: name(s)
+    """
     with ZipFile(zip_path) as zf:
         names = zf.namelist()
         # Find gdb file(s) (it's actually a folder, hence /)
@@ -89,12 +111,15 @@ def find_combined_layer(path):
             ```
             zip:///path/to/zip/file.zip!gdb_file.gdb
             ```
+
+    Returns:
+        str: name of combined layer in Geodatabase file
     """
     layers = fiona.listlayers(path)
 
     match = 'Fee_Designation_Easement'
     matched_layers = [x for x in layers if match in x]
-    assert len(matched_layers) == 1, '>1 matched layer'
+    assert len(matched_layers) == 1, '!=1 matched layer'
     return matched_layers[0]
 
 
