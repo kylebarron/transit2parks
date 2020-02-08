@@ -2,6 +2,8 @@ from zipfile import ZipFile
 
 import fiona
 import geopandas as gpd
+import requests
+from bs4 import BeautifulSoup
 from keplergl_quickvis import Visualize as Vis
 from pyproj import CRS
 
@@ -94,3 +96,40 @@ def find_combined_layer(path):
     matched_layers = [x for x in layers if match in x]
     assert len(matched_layers) == 1, '>1 matched layer'
     return matched_layers[0]
+
+
+def get_urls():
+    """Get PAD download urls by state
+
+    Returns:
+        dict: key is name of state with _ between words, lower case. value is download url
+    """
+    url = 'https://www.usgs.gov/core-science-systems/science-analytics-and-synthesis/gap/science/pad-us-data-download'
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text, 'lxml')
+
+    p = soup.find('p', text='Download PAD-US by State / Territory')
+    state_list_ul = p.find_next('ul')
+
+    state_links = state_list_ul.find_all('li')
+    gdb_links = []
+    for state_link in state_links:
+        gdb_link = [
+            a for a in state_link.find_all('a') if 'Geodatabase' in a.text][0]
+        gdb_links.append(gdb_link)
+
+    drop_states = [
+        'American Samoa', 'Alaska', 'Hawaii', 'Northern Mariana', 'Guam',
+        'Puerto Rico', 'Virgin Islands']
+
+    state_links_filtered = [
+        x for x in gdb_links if not any(
+            drop_state.lower() in x.text.lower() for drop_state in drop_states)]
+    urls = {}
+    for state_link in state_links_filtered:
+        text = state_link.text.lower()
+        state_name = text.replace('geodatabase', '').strip().replace(' ', '_')
+        url = state_link.attrs['href']
+        urls[state_name] = url
+
+    return urls
