@@ -52,7 +52,7 @@ DESIGNATION_TYPES = {
     'SCA': 'State Conservation Area',
     # 'SDA': 'Special Designation Area',
     # 'SHCA': 'State Historic or Cultural Area',
-    'SOTH': 'State Other or Unknown',
+    # 'SOTH': 'State Other or Unknown',
     'SP': 'State Park',
     'SREC': 'State Recreation Area',
     # 'SRMA': 'State Resource Management Area',
